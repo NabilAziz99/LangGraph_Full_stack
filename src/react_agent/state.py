@@ -1,30 +1,66 @@
-import operator
-from typing import List, Annotated
-from typing_extensions import TypedDict
+from langchain_openai import ChatOpenAI
 
+def is_palindrome(s: str) -> bool:
+    """
+    check if a string is a palindrome
+    Args:
+        s: first string
+    """
+    s = s.replace(" ", "").lower()
+    return s == s[::-1]
+
+def reverse_string(s:str):
+     """
+    Reverse the string
+    Args:
+        s: first string
+     """
+     return s[::-1]
+    
+    
+    
+    
+    
+
+
+
+
+llm = ChatOpenAI(model="gpt-4o")
+llm_with_tools = llm.bind_tools([is_palindrome, reverse_string])
+
+
+
+
+
+
+
+
+
+from langgraph.graph import StateGraph, START, END
 from langgraph.graph import MessagesState
-from schemas import developer
+from langgraph.prebuilt import ToolNode
+from langgraph.prebuilt import tools_condition
 
-class GeneratedevelopersState(TypedDict):
-    topic: str  # Research topic
-    max_developer: int  # Number of developers
-    human_developer_feedback: str  # Human feedback
-    developers: List[developer]  # List of developers
+# Node
+def tool_calling_llm(state: MessagesState):
+    return {"messages": [llm_with_tools.invoke(state["messages"])]}
 
-class InterviewState(MessagesState):
-    max_num_turns: int  # Number of conversation turns
-    context: Annotated[list, operator.add]  # Source documents
-    developer: developer  # developer asking questions
-    interview: str  # Interview transcript
-    sections: list  # Key duplicated in outer state for Send() API
+# Build graph
+builder = StateGraph(MessagesState)
+builder.add_node("tool_calling_llm", tool_calling_llm)
+builder.add_node("tools", ToolNode([is_palindrome,reverse_string]))
+builder.add_edge(START, "tool_calling_llm")
+builder.add_conditional_edges(
+    "tool_calling_llm",
+    # If the latest message (result) from assistant is a tool call -> tools_condition routes to tools
+    # If the latest message (result) from assistant is a not a tool call -> tools_condition routes to END
+    tools_condition,
+)
+builder.add_edge("tools", END)
+graph = builder.compile()
 
-class ResearchGraphState(TypedDict):
-    topic: str  # Research topic
-    max_developer: int  # Number of developers
-    human_developer_feedback: str  # Human feedback
-    developers: List[developer]  # List of developers
-    sections: Annotated[list, operator.add]  # Send() API key
-    introduction: str  # Introduction for the final report
-    content: str  # Content for the final report
-    conclusion: str  # Conclusion for the final report
-    final_report: str  # Final report
+from langchain_core.messages import HumanMessage
+messages = [HumanMessage(content="Is this civyic a palindrome? then take it and reverse it")]
+messages = graph.invoke({"messages": messages})
+for m in messages['messages']:
+    m.pretty_print()

@@ -80,7 +80,8 @@ class InterviewState(MessagesState):
 class SearchQuery(BaseModel):
     search_query: str = Field(None, description="Search query for retrieval.")
 
-class ResearchGraphState(TypedDict):
+class DeveloperGraphState(TypedDict):
+    requirements: str  # Functional requirements
     topic: str  # Research topic
     max_developer: int  # Number of developers
     human_developer_feedback: str  # Human feedback
@@ -90,6 +91,7 @@ class ResearchGraphState(TypedDict):
     content: str  # Content for the final report
     conclusion: str  # Conclusion for the final report
     final_report: str  # Final report
+    
 
 
 
@@ -99,7 +101,7 @@ class GenerateDeveloperState(TypedDict):
     topic: str  # Research topic
 
 
-class ResearchGraphState(TypedDict):
+class DeveloperGraphState(TypedDict):
     topic: str  # Research topic
     
 '''

@@ -13,7 +13,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from prompts import process_instructions,developer_instructions,question_instructions,search_instructions,answer_instructions,section_writer_instructions,report_writer_instructions,intro_conclusion_instructions # or other imports
 from langgraph.constants import Send
-from schemas import functional_requirement,developer, Perspectives, SearchQuery, GenerateDeveloperState, InterviewState, ResearchGraphState
+from schemas import functional_requirement,developer, Perspectives, SearchQuery, GenerateDeveloperState, InterviewState, DeveloperGraphState
     
 from langgraph.graph import END, MessagesState, START, StateGraph
 
@@ -23,6 +23,11 @@ llm = ChatOpenAI(model="gpt-4o", temperature=0)
 ### Function Definitions
 
 
+def success(state: GenerateDeveloperState):
+    """Success node"""   
+    topic=state['topic']
+
+    return {"analysts": topic}
 
 def process_requirements(state: GenerateDeveloperState):
     
@@ -35,6 +40,7 @@ def process_requirements(state: GenerateDeveloperState):
     human_developer_feedback = state.get('human_developer_feedback', '')
 
     # Enforce structured output
+    
     structured_llm = llm.with_structured_output(functional_requirement)
 
     # System message
@@ -50,6 +56,7 @@ def process_requirements(state: GenerateDeveloperState):
         SystemMessage(content=system_message),
         HumanMessage(content="Process the requirements.")
     ])
+    
 
     # Write the list of developers to state
     return {"requirements": requirements.requirements}
@@ -58,6 +65,43 @@ def process_requirements(state: GenerateDeveloperState):
     
     
     
+
+
+def human_feedback_for_requirements(state: GenerateDeveloperState):
+    """No-op node that should be interrupted on"""
+    pass
+
+
+
+
+
+
+def initiate_all_creating_developers(state: DeveloperGraphState):
+    """Conditional edge to initiate all interviews via Send() API or return to create_developer"""    
+    human_developer_feedback = state.get('human_developer_feedback', 'approve')
+    if human_developer_feedback.lower() != 'approve':
+        return "process_requirements"
+    return "success"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def create_developers(state: GenerateDeveloperState):
     """Create developers"""
@@ -84,13 +128,25 @@ def create_developers(state: GenerateDeveloperState):
     # Write the list of developers to state
     return {"developers": developers.developers}
 
-def human_feedback_for_requirements(state: GenerateDeveloperState):
-    """No-op node that should be interrupted on"""
-    pass
+
+
 
 def human_feedback(state: GenerateDeveloperState):
     """No-op node that should be interrupted on"""
     pass
+
+
+def initiate_all_interviews(state: GenerateDeveloperState):
+    """Conditional edge to initiate all interviews via Send() API or return to create_developer"""    
+    human_developer_feedback = state.get('human_developer_feedback', 'approve')
+    if human_developer_feedback.lower() != 'approve':
+        return "process_requirements"
+    else:
+        topic = state["topic"]
+        return [Send("conduct_interview", {
+            "developer": developer,
+            "messages": [HumanMessage(content=f"So you are working on designing {topic}?")]
+        }) for developer in state["developers"]]
 
 def generate_question(state: InterviewState):
     """Node to generate a question"""
@@ -207,20 +263,11 @@ def write_section(state: InterviewState):
     # Append it to state
     return {"sections": [section.content]}
 
-def initiate_all_interviews(state: ResearchGraphState):
-    """Conditional edge to initiate all interviews via Send() API or return to create_developer"""    
-    human_developer_feedback = state.get('human_developer_feedback', 'approve')
-    if human_developer_feedback.lower() != 'approve':
-        return "create_developer"
-    else:
-        topic = state["topic"]
-        return [Send("conduct_interview", {
-            "developer": developer,
-            "messages": [HumanMessage(content=f"So you said you were writing an article on {topic}?")]
-        }) for developer in state["developers"]]
 
-def dependencies(state: ResearchGraphState):
-    """Node to write the final report body"""
+
+
+def dependencies(state: DeveloperGraphState):
+    """Node to write the dependencies section"""
     sections = state["sections"]
     topic = state["topic"]
 
@@ -236,8 +283,8 @@ def dependencies(state: ResearchGraphState):
     ]) 
     return {"content": report.content}
 
-def backend_end(state: ResearchGraphState):
-    """Node to write the introduction"""
+def backend_end(state: DeveloperGraphState):
+    """Node to write the backend design section"""
     sections = state["sections"]
     topic = state["topic"]
 
@@ -253,8 +300,8 @@ def backend_end(state: ResearchGraphState):
     ]) 
     return {"introduction": intro.content}
 
-def front_end(state: ResearchGraphState):
-    """Node to write the conclusion"""
+def front_end(state: DeveloperGraphState):
+    """Node to write the front-end design section"""
     sections = state["sections"]
     topic = state["topic"]
 
@@ -270,7 +317,7 @@ def front_end(state: ResearchGraphState):
     ]) 
     return {"conclusion": conclusion.content}
 
-def finalize_report(state: ResearchGraphState):
+def finalize_report(state: DeveloperGraphState):
     """Gather all sections and write the final report"""
     content = state["content"]
     if content.startswith("## Insights"):

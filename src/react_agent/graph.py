@@ -1,3 +1,4 @@
+
 import operator
 from pydantic import BaseModel, Field
 from typing import Annotated, List
@@ -13,10 +14,10 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from prompts import developer_instructions,question_instructions,search_instructions,answer_instructions,section_writer_instructions,report_writer_instructions,intro_conclusion_instructions # or other imports
 from langgraph.constants import Send
-from schemas import developer, Perspectives, SearchQuery, GenerateDeveloperState, InterviewState, ResearchGraphState
+from schemas import developer, Perspectives, SearchQuery, GenerateDeveloperState, InterviewState, DeveloperGraphState
     
 from langgraph.graph import END, MessagesState, START, StateGraph
-from schemas import InterviewState, ResearchGraphState
+from schemas import InterviewState, DeveloperGraphState
 from node import (
     generate_question,
     search_web,
@@ -34,10 +35,39 @@ from node import (
     finalize_report,
     process_requirements,
     human_feedback_for_requirements,
+    initiate_all_creating_developers,
+    success,
 )
 
 ### Build Interview Graph
 
+'''
+
+builder = StateGraph(DeveloperGraphState)
+builder.add_node("process_requirements", process_requirements)
+
+builder.add_node("create_developer", create_developers)
+builder.add_node("human_feedback", human_feedback)
+#builder.add_node("success", success)
+
+
+
+
+builder.add_edge(START,"process_requirements")
+builder.add_edge("process_requirements","create_developer")
+
+
+
+
+
+builder.add_edge("create_developer", "human_feedback")
+builder.add_conditional_edges(
+    "human_feedback", 
+    initiate_all_interviews, 
+    ["process_requirements", END]
+)
+
+graph = builder.compile(interrupt_before=['human_feedback' ])
 
 
 
@@ -45,7 +75,7 @@ from node import (
 
 
 
-
+'''
 
 
 interview_builder = StateGraph(InterviewState)
@@ -75,12 +105,11 @@ compiled_interview_graph = interview_builder.compile()
 
 ### Build Main Graph
 
-builder = StateGraph(ResearchGraphState)
+builder = StateGraph(DeveloperGraphState)
 builder.add_node("create_developer", create_developers)
 
 builder.add_node("process_requirements", process_requirements)
 
-builder.add_node("human_feedback_for_requirements", human_feedback_for_requirements)
 
 builder.add_node("human_feedback", human_feedback)
 builder.add_node("conduct_interview", compiled_interview_graph)
@@ -91,12 +120,8 @@ builder.add_node("finalize_report", finalize_report)
 
 # Logic
 builder.add_edge(START,"process_requirements")
-builder.add_edge("process_requirements","human_feedback_for_requirements")
-builder.add_conditional_edges(
-    "human_feedback_for_requirements", 
-    initiate_all_interviews, 
-    ["process_requirements", "create_developer"]
-)
+builder.add_edge("process_requirements","create_developer")
+
 
 builder.add_edge("create_developer", "human_feedback")
 builder.add_conditional_edges(
@@ -114,37 +139,7 @@ builder.add_edge(
 builder.add_edge("finalize_report", END)
 
 # Compile the main graph
-graph = builder.compile(interrupt_before=['human_feedback','create_developer','human_feedback_for_requirements' ])
+graph = builder.compile(interrupt_before=['human_feedback','create_developer' ])
 
 
 
-
-
-
-
-
-
-'''
-
-
-### Build Main Graph
-
-builder = StateGraph(ResearchGraphState)
-
-
-builder.add_node("create_developers", create_developers)
-builder.add_node("human_feedback", human_feedback)
-
-
-
-# Logic
-builder.add_edge(START,"create_developers")
-builder.add_edge("create_developers","human_feedback")
-
-builder.add_edge("human_feedback",END)
-
-
-# Compile the main graph
-graph = builder.compile()
-
-'''
