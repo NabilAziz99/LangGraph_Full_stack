@@ -1,3 +1,4 @@
+# graph.py
 
 import operator
 from pydantic import BaseModel, Field
@@ -12,134 +13,50 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from prompts import developer_instructions,question_instructions,search_instructions,answer_instructions,section_writer_instructions,report_writer_instructions,intro_conclusion_instructions # or other imports
 from langgraph.constants import Send
-from schemas import developer, Perspectives, SearchQuery, GenerateDeveloperState, InterviewState, DeveloperGraphState
-    
+
 from langgraph.graph import END, MessagesState, START, StateGraph
-from schemas import InterviewState, DeveloperGraphState
+from schemas import DeveloperState
 from node import (
-    generate_question,
-    search_web,
-    search_wikipedia,
-    generate_answer,
-    save_interview,
-    route_messages,
-    write_section,
-    create_developers,
     human_feedback,
     initiate_all_interviews,
-    dependencies,
-    backend_end,
-    front_end,
-    finalize_report,
     process_requirements,
-    human_feedback_for_requirements,
-    initiate_all_creating_developers,
-    success,
+    front_end_process,
+    back_end_process,
+    organize_front_end_code,
+    organize_back_end_code,  # Added this import
+    generate_front_end_code,
+    generate_back_end_code
 )
 
 ### Build Interview Graph
 
-'''
+# Assuming all necessary imports and node functions are already defined above
 
-builder = StateGraph(DeveloperGraphState)
+# Initialize the StateGraph with DeveloperState
+builder = StateGraph(DeveloperState)
+
+# Add existing nodes
 builder.add_node("process_requirements", process_requirements)
+# builder.add_node("get_human_feedback", human_feedback)  # Commented out as per user instructions
+builder.add_node("front_end_process", front_end_process)
+builder.add_node("back_end_process", back_end_process)
+builder.add_node("organize_front_end_code", organize_front_end_code)
+builder.add_node("organize_back_end_code", organize_back_end_code)
 
-builder.add_node("create_developer", create_developers)
-builder.add_node("human_feedback", human_feedback)
-#builder.add_node("success", success)
+# Add the new nodes for code generation
+builder.add_node("generate_front_end_code", generate_front_end_code)
+builder.add_node("generate_back_end_code", generate_back_end_code)
 
+# Define edges
+builder.add_edge(START, "process_requirements")
+builder.add_edge("process_requirements", "front_end_process")
+builder.add_edge("front_end_process", "back_end_process")
+builder.add_edge("back_end_process", "organize_front_end_code")
+builder.add_edge("organize_front_end_code", "organize_back_end_code")
+builder.add_edge("organize_back_end_code", "generate_front_end_code")
+builder.add_edge("generate_front_end_code", "generate_back_end_code")
+builder.add_edge("generate_back_end_code", END)
 
-
-
-builder.add_edge(START,"process_requirements")
-builder.add_edge("process_requirements","create_developer")
-
-
-
-
-
-builder.add_edge("create_developer", "human_feedback")
-builder.add_conditional_edges(
-    "human_feedback", 
-    initiate_all_interviews, 
-    ["process_requirements", END]
-)
-
-graph = builder.compile(interrupt_before=['human_feedback' ])
-
-
-
-
-
-
-
-'''
-
-
-interview_builder = StateGraph(InterviewState)
-
-interview_builder.add_node("ask_question", generate_question)
-interview_builder.add_node("search_web", search_web)
-interview_builder.add_node("search_wikipedia", search_wikipedia)
-interview_builder.add_node("answer_question", generate_answer)
-interview_builder.add_node("save_interview", save_interview)
-interview_builder.add_node("write_section", write_section)
-
-# Flow
-interview_builder.add_edge(START, "ask_question")
-interview_builder.add_edge("ask_question", "search_web")
-interview_builder.add_edge("ask_question", "search_wikipedia")
-interview_builder.add_edge("search_web", "answer_question")
-interview_builder.add_edge("search_wikipedia", "answer_question")
-interview_builder.add_conditional_edges(
-    "answer_question", 
-    route_messages, 
-    ['ask_question', 'save_interview']
-)
-interview_builder.add_edge("save_interview", "write_section")
-interview_builder.add_edge("write_section", END)
-
-compiled_interview_graph = interview_builder.compile()
-
-### Build Main Graph
-
-builder = StateGraph(DeveloperGraphState)
-builder.add_node("create_developer", create_developers)
-
-builder.add_node("process_requirements", process_requirements)
-
-
-builder.add_node("human_feedback", human_feedback)
-builder.add_node("conduct_interview", compiled_interview_graph)
-builder.add_node("dependencies", dependencies)
-builder.add_node("backend_end", backend_end)
-builder.add_node("front_end", front_end)
-builder.add_node("finalize_report", finalize_report)
-
-# Logic
-builder.add_edge(START,"process_requirements")
-builder.add_edge("process_requirements","create_developer")
-
-
-builder.add_edge("create_developer", "human_feedback")
-builder.add_conditional_edges(
-    "human_feedback", 
-    initiate_all_interviews, 
-    ["create_developer", "conduct_interview"]
-)
-builder.add_edge("conduct_interview", "dependencies")
-builder.add_edge("conduct_interview", "backend_end")
-builder.add_edge("conduct_interview", "front_end")
-builder.add_edge(
-    ["front_end", "dependencies", "backend_end"], 
-    "finalize_report"
-)
-builder.add_edge("finalize_report", END)
-
-# Compile the main graph
-graph = builder.compile(interrupt_before=['human_feedback','create_developer' ])
-
-
-
+# Compile the graph
+graph = builder.compile()
