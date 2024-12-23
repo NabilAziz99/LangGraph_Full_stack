@@ -91,17 +91,15 @@ Please follow these steps:
    - **App Idea**: {topic}
    - **Front-End Requirements**: {front_end_requirements}
    - **API Design**: {api_design_and_data_structure_front_end}
-   - backend requirements description : {back_end_requirements}
-   - back end api endpoints and logic description : {back_end_api_endpoints_and_logic}
-
+   - **Back-End Requirements Description**: {back_end_requirements}
+   - **Back-End API Endpoints and Logic Description**: {back_end_api_endpoints_and_logic}
 
 2. **Ensure Best Practices**:
    - Use functional components and React Hooks where appropriate.
    - Organize components and utilities into appropriate directories.
    - Keep the code structure suitable for a small project.
-   - Limit the number of files; create only necessary files and components. 
-   - Ensure that one file is specifically designated as the `endpoint_file` for API interactions, this will be the only file that contains the full code for it.
-
+   - Limit the number of files; create only necessary files and components.
+   - **Ensure that one file is specifically designated for API interactions. This will be the only file that contains the full code for API calls.**
 
 3. **Focus on Core Functionality**:
    - Prioritize essential features and UI elements required by the application.
@@ -110,7 +108,7 @@ Please follow these steps:
 
 **Example**:
 
-**Directory**: components  
+**Directory**: `src`  
 **Files**:
 - **Name**: `App.js`  
   **Description**: The root component of the application.  
@@ -120,6 +118,8 @@ Please follow these steps:
       **Description**: Sets up the main application layout and routes.  
       **Renders**: The application structure including header and main content.
 
+**Directory**: `components`  
+**Files**:
 - **Name**: `Header.js`  
   **Description**: Displays the application header.  
   **Components**:
@@ -128,15 +128,11 @@ Please follow these steps:
       **Description**: Shows the logo and navigation links.  
       **Renders**: The header section with navigation.
 
-**Directory**: pages  
+
+**Directory**: `api`  
 **Files**:
-- **Name**: `HomePage.js`  
-  **Description**: The main landing page of the application.  
-  **Components**:
-    - **Name**: `HomePage`  
-      **Props**: None  
-      **Description**: Displays welcome message and key features.  
-      **Renders**: The homepage content.
+- **Name**: `api.js`  
+  **Description**: **This is the designated `endpoint_file`** for API interactions. It contains all functions for making API calls to the back end.
 
 [Continue listing other directories and files as needed for the project]
 """
@@ -147,7 +143,7 @@ Please follow these steps:
 
 1. **Review the app idea, global requirements, and front-end requirements**:
    - **App Idea**: {topic}
-   - **Front-End Requirements description**: {front_end_requirements}
+   - **Front-End Requirements Description**: {front_end_requirements}
    - **Front-End API Design and Data Structure**: {api_design_and_data_structure_front_end}
    - **Front-End Endpoint File**: {front_end_endpoint_file}
 
@@ -155,6 +151,7 @@ Please follow these steps:
    - **Back-End API Endpoints and Logic**: {api_endpoints_and_logic}
 
 2. **Organize the Back-End Code**:
+   - **Ensure that one file is specifically designated as the `main.py` for API interactions. This will be the only file that contains the full code for the API endpoints.**
    - Generate a list of code files necessary for the back end.
    - For each file, provide:
      - **Name**: The file name (e.g., `main.py`, `routes.py`).
@@ -166,7 +163,6 @@ Please follow these steps:
    - Organize routes, controllers, and services appropriately.
    - Keep the code structure suitable for a small project.
    - Limit the number of files to a maximum of 6 to keep the project manageable.
-   - Ensure that one file is specifically designated as the `endpoint_file` for API interactions, this will be the only file that contains the full code for it.
 
 4. **Focus on a Prototype Without a Database**:
    - Design the back-end code to function without a database.
@@ -174,13 +170,17 @@ Please follow these steps:
 
 **Example**:
 
+**Directory**: `app`  
+**Files**:
 - **Name**: `main.py`  
-  **Description**: Entry point of the application; initializes the FastAPI app and includes route registrations.  
+  **Description**: The entry point of the application; initializes the FastAPI app and includes route registrations.  
   **Functions**:
     - `create_app()`: Configures and returns the FastAPI application instance.
 
-- **Name**: `routes.py`  
-  **Description**: Contains API endpoint definitions.  
+**Directory**: `api`  
+**Files**:
+- **Name**: `endpoints.py`  
+  **Description**: **This is the designated `endpoint_file`** containing all API endpoint definitions.  
   **Functions**:
     - `get_items()`: Handles GET requests to retrieve items.
     - `create_item()`: Handles POST requests to create a new item.
@@ -209,10 +209,9 @@ Please follow these steps:
 
 4. **Provide the Code**:
    - For each file in the code organization, generate the code as per the specifications.
-   - Provide the output as a JSON array of objects, where each object contains:
-     - **folder_name**: The folder where the file is located.
-     - **file_name**: The name of the file.
-     - **code**: The actual code of the file.
+   - Provide the output as a JSON array of objects.
+   - Also remember the will be one file which would the end point logic do not forget to include the full code for it, you will be able to provide it under endpoint_file key in the JSON object.
+
 
 
 """
@@ -235,5 +234,59 @@ Please follow these steps:
 3. **Use Best Practices**:
    - Follow best practices for Python and FastAPI development.
    - Ensure code is clean, maintainable, and well-documented.
+   
+4. **Provide the Code**:
+   - For each file in the code organization, generate the code as per the specifications.
+   - Provide the output as a JSON array of objects.
+   - Also remember the will be one file which would the end point logic do not forget to include the full code for it, you will be able to provide it under endpoint_file key in the JSON object.
 
+"""
+
+project_setup_instructions = """
+You are a system design engineer tasked with setting up the project structure and environment for a small application.
+
+Please follow these steps carefully:
+
+1. **Review the Project Structure**:
+   - The project consists of two main directories:
+     - **Front End**: Contains the React application.
+     - **Back End**: Contains the Python FastAPI application.
+
+2. **Front-End Organization**:
+{front_end_organization}
+
+3. **Back-End Organization**:
+{back_end_organization}
+
+4. **Setup Instructions**:
+
+   **Front End**:
+   - Navigate to the `front_end` directory (create it if it doesn't exist).
+   - Install the required frameworks and dependencies. Include commands for installing each dependency.
+   - Provide instructions on how to run the front-end application, specifying the entry point file.
+
+   **Back End**:
+   - Navigate to the `back_end` directory (create it if it doesn't exist).
+   - Explain how to set up the virtual environment for Python.
+   - use poetry to install the required dependencies.
+   - Install the required frameworks and dependencies. Include commands for installing each dependency.
+   - make sure to go step by step since the software will be using visual studio code and need to put the interpreter in the right place.
+   - Provide instructions on how to run the back-end application, specifying the entry point file.
+
+5. **Assumptions and Environment Setup**:
+   - Assume the user npm installed for the front end.
+   - Assume the user has Python 3.7+ installed for the back end.
+   - Mention any environment variables or configurations that need to be set.
+
+6. **Provide the Instructions in a Clear and Organized Manner**:
+   - Use bullet points or numbered lists where appropriate.
+   - Ensure that the instructions are easy to follow for someone with basic knowledge of software development.
+
+**Example**:
+
+**Front End Setup**:
+
+- **Install Dependencies**:
+  ```bash
+  npm install
 """

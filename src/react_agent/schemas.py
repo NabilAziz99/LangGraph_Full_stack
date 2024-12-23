@@ -63,12 +63,17 @@ class RequiredFramework(BaseModel):
     Attributes:
         name (str): The name of the framework or library.
         description (str): A description of how the framework or library will be used.
+        installation_instructions (Optional[str]): Instructions on how to download or install the framework or library.
     """
     name: str = Field(
         description="The name of the framework or library.",
     )
     description: str = Field(
         description="A description of how the framework or library will be used.",
+    )
+    installation_instructions: Optional[str] = Field(
+        default=None,
+        description="Instructions on how to download or install the framework or library.",
     )
 
 # Front-End Models
@@ -168,7 +173,7 @@ class File(BaseModel):
         name (str): The name of the file.
         description (str): A brief description of what the file does.
         methods (List[Method]): A list of methods within the file.
-        code (Optional[str]): The actual code of the file, if applicable (e.g., for the endpoint file).
+        code (Optional[str]): The actual code of the file, if applicable.
     """
     name: str = Field(
         description="The name of the file.",
@@ -191,6 +196,7 @@ class Folder(BaseModel):
     Attributes:
         name (str): The name of the folder.
         files (List[File]): A list of files within the folder.
+        endpoint_file (Optional[File]): The designated endpoint file for API interactions.
     """
     name: str = Field(
         description="The name of the folder.",
@@ -198,10 +204,10 @@ class Folder(BaseModel):
     files: List[File] = Field(
         default_factory=list,
         description="A list of files within the folder.",
-    ) 
+    )
     endpoint_file: Optional[File] = Field(
         default=None,
-        description="The file containing the actual endpoint logic, available only in one specific folder.",
+        description="The file containing the actual endpoint logic, available only in one specific folder. Make sure to have it and to only have one.",
     )
 
 class CodeOrganization(BaseModel):
@@ -214,17 +220,20 @@ class CodeOrganization(BaseModel):
     folders: List[Folder] = Field(
         description="A list of folders in the project.",
     )
-    
 
-'''
+
 class CodeGeneration(BaseModel):
     """
     Represents the generated code for a file.
 
-    Attributes:
+    Attributes:    
+        folder_name (str): The name of the folder containing the file.
         file_name (str): The name of the file.
         code (str): The actual code of the file.
     """
+    folder_name: str = Field(
+        description="The name of the folder containing the file.",
+    )
     file_name: str = Field(
         description="The name of the file.",
     )
@@ -246,9 +255,25 @@ class CodeFolder(BaseModel):
     files: List[CodeGeneration] = Field(
         description="List of code files in the folder.",
     )
-'''
+
 # Developer State
 
+
+
+class ProjectSetup(BaseModel):
+    """
+    Represents instructions on how to set up and run the project.
+
+    Attributes:
+        front_end_setup (str): Instructions for setting up and running the front-end application.
+        back_end_setup (str): Instructions for setting up and running the back-end application.
+    """
+    front_end_setup: str = Field(
+        description="Instructions on how to set up and run the front-end application."
+    )
+    back_end_setup: str = Field(
+        description="Instructions on how to set up and run the back-end application."
+    )
 class DeveloperState(BaseModel):
     topic: str = Field(
         description="The project topic or app idea.",
@@ -285,4 +310,9 @@ class DeveloperState(BaseModel):
     generate_frontend_code: Optional[CodeOrganization] = Field(
         default=None,
         description="Generated front-end code files organized by folders.",
+    )
+    project_setup_instructions: Optional[ProjectSetup] = Field(
+        default=None,
+
+        description="Overall instructions on how to set up and run the entire project.",
     )

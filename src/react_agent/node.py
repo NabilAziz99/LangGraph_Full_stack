@@ -22,6 +22,7 @@ from prompts import (
     front_end_organization_instructions,
     front_end_generation_instructions,
     back_end_generation_instructions,
+    project_setup_instructions,
     
     
 )
@@ -34,6 +35,7 @@ from schemas import (
     FrontEndDependencies,
     BackEndDependencies,
     CodeOrganization,
+    ProjectSetup,
  
 )
 
@@ -67,9 +69,12 @@ def process_requirements(state: DeveloperState):
     return {"global_requirements": requirements}
 
 
-def human_feedback(state: DeveloperState):
+def human_feedback_requirements(state: DeveloperState):
     """No-op node that should be interrupted on"""
-    pass
+    human_developer_feedback = state.human_feedback or ''
+
+    return {"human_feedback": human_developer_feedback}
+ 
 
 
 def initiate_all_interviews(state: DeveloperState):
@@ -269,3 +274,22 @@ def generate_back_end_code(state: DeveloperState):
 
     # Update the state with the generated code
     return {"generate_backend_code": code_generation}
+
+
+
+
+def required_software(state: DeveloperState):
+    """Check for required software"""
+    back_end_organization = state.back_end_organization
+    front_end_organization = state.front_end_organization
+    
+    structured_llm = llm.with_structured_output(ProjectSetup)
+    system_message = project_setup_instructions.format(
+        front_end_organization=front_end_organization,
+        back_end_organization=back_end_organization # Use description or relevant content
+    )
+    setup_instructions = structured_llm.invoke([
+        SystemMessage(content=system_message),
+        HumanMessage(content="Please check for required software."),
+    ])
+    return    {"project_setup_instructions": setup_instructions}
